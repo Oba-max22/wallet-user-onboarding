@@ -64,7 +64,7 @@ public class UserServiceImpl implements UserService {
         user.setRoles(roles);
 
         // Create wallet
-        Wallet wallet = walletRepository.save(Wallet.builder().user(user).balance(0.0).build());
+        Wallet wallet = walletRepository.save(Wallet.builder().balance(0.0).build());
         user.setWallet(wallet);
 
         return userRepository.save(user);
