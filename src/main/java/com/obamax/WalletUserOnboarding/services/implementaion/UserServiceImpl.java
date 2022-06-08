@@ -1,6 +1,7 @@
 package com.obamax.WalletUserOnboarding.services.implementaion;
 
 import com.obamax.WalletUserOnboarding.exceptions.BadRequestException;
+import com.obamax.WalletUserOnboarding.exceptions.ResourceNotFoundException;
 import com.obamax.WalletUserOnboarding.models.Role;
 import com.obamax.WalletUserOnboarding.models.User;
 import com.obamax.WalletUserOnboarding.models.Wallet;
@@ -10,6 +11,7 @@ import com.obamax.WalletUserOnboarding.repositories.RoleRepository;
 import com.obamax.WalletUserOnboarding.repositories.UserRepository;
 import com.obamax.WalletUserOnboarding.repositories.WalletRepository;
 import com.obamax.WalletUserOnboarding.services.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -46,10 +48,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public User signup(SignupRequest signupRequest) {
         if (userRepository.existsByEmailAddress(signupRequest.getEmailAddress())) {
-            throw new BadRequestException("Error: Email is already taken!");
+            throw new BadRequestException("Email is already taken!", HttpStatus.BAD_REQUEST);
         }
         if (!isValidPassword(signupRequest.getPassword())) {
-            throw new BadRequestException("Error: Password must be between 8 and 20, must be an Alphabet or Number");
+            throw new BadRequestException("Password must be between 8 and 20, must be an Alphabet or Number", HttpStatus.BAD_REQUEST);
         }
 
         // Create user
@@ -60,8 +62,8 @@ public class UserServiceImpl implements UserService {
 
         // Set role
         List<Role> roles = new ArrayList<>();
-        Role userRole = new Role();
-        userRole.setType(RoleType.USER);
+        Role userRole = roleRepository.findRoleByType(RoleType.USER)
+                .orElseThrow(() -> new ResourceNotFoundException("Role is not found.", HttpStatus.NOT_FOUND));
         roles.add(userRole);
         user.setRoles(roles);
 
@@ -79,7 +81,7 @@ public class UserServiceImpl implements UserService {
         // Compile the ReGex
         Pattern p = Pattern.compile(regex);
         if (password == null) {
-            throw new BadRequestException("Error: Password cannot be null");
+            throw new BadRequestException("Password cannot be null", HttpStatus.BAD_REQUEST);
         }
         Matcher m = p.matcher(password);
         return m.matches();

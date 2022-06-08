@@ -13,6 +13,7 @@ import com.obamax.WalletUserOnboarding.payload.responses.WalletWithdrawalRespons
 import com.obamax.WalletUserOnboarding.repositories.TransactionRepository;
 import com.obamax.WalletUserOnboarding.repositories.WalletRepository;
 import com.obamax.WalletUserOnboarding.services.WalletService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -40,7 +41,7 @@ public class WalletServiceImpl implements WalletService {
         if (amount <= 0) {
             saveTransactionDetails(amount, wallet, TransactionMode.CREDIT, TransactionStatus.FAILED,
                     TransactionType.FUND, NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE);
-            throw new BadRequestException("Amount cannot be less than or equal to zero.");
+            throw new BadRequestException("Amount cannot be less than or equal to zero.", HttpStatus.BAD_REQUEST);
         }
 
         wallet.setBalance(wallet.getBalance() + amount);
@@ -61,7 +62,7 @@ public class WalletServiceImpl implements WalletService {
                     TransactionType.WITHDRAW, walletWithdrawalRequest.getBankName(),
                     walletWithdrawalRequest.getBeneficiaryAccountName(),
                     walletWithdrawalRequest.getBeneficiaryAccountNumber());
-            throw new BadRequestException("Amount cannot be less than or equal to zero.");
+            throw new BadRequestException("Amount cannot be less than or equal to zero.", HttpStatus.BAD_REQUEST);
         }
 
         if (wallet.getBalance() < amount) {
@@ -69,7 +70,7 @@ public class WalletServiceImpl implements WalletService {
                     TransactionType.WITHDRAW, walletWithdrawalRequest.getBankName(),
                     walletWithdrawalRequest.getBeneficiaryAccountName(),
                     walletWithdrawalRequest.getBeneficiaryAccountNumber());
-            throw new BadRequestException("Insufficient funds.");
+            throw new BadRequestException("Insufficient funds.", HttpStatus.BAD_REQUEST);
         }
 
         wallet.setBalance(wallet.getBalance() - amount);
@@ -92,7 +93,7 @@ public class WalletServiceImpl implements WalletService {
 
     private Wallet getWalletById(Long id) {
         return walletRepository.findById(id).orElseThrow(() -> {
-            throw new ResourceNotFoundException("No such wallet.");
+            throw new ResourceNotFoundException("No such wallet.", HttpStatus.NOT_FOUND);
         });
     }
 
