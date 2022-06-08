@@ -1,12 +1,11 @@
 package com.obamax.WalletUserOnboarding.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -20,4 +19,8 @@ public class Wallet extends BaseEntity {
     @NotBlank(message = "balance can not be blank")
     @Column(name = "balance", nullable = false)
     private double balance;
+
+    @OneToMany(mappedBy = "wallet", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Transaction> transactionList;
 }
