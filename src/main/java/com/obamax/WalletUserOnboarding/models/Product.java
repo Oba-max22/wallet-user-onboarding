@@ -4,6 +4,9 @@ import lombok.*;
 import javax.persistence.*;
 import javax.validation.constraints.*;
 
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -12,9 +15,9 @@ public class Product extends BaseEntity {
 
     @NotBlank(message = "name can not be blank")
     @Column(name = "last_name", nullable = false)
-    public String name;
+    private String name;
 
     @NotBlank(message = "price can not be blank")
     @Column(name = "price", nullable = false)
-    public double price;
+    private double price;
 }

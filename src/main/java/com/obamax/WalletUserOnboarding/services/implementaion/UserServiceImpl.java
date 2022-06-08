@@ -1,21 +1,23 @@
 package com.obamax.WalletUserOnboarding.services.implementaion;
 
-import com.obamax.WalletUserOnboarding.exceptions.ResourceNotFoundException;
+import com.obamax.WalletUserOnboarding.exceptions.BadRequestException;
 import com.obamax.WalletUserOnboarding.models.Role;
-import com.obamax.WalletUserOnboarding.models.RoleType;
 import com.obamax.WalletUserOnboarding.models.User;
 import com.obamax.WalletUserOnboarding.models.Wallet;
+import com.obamax.WalletUserOnboarding.models.enums.RoleType;
 import com.obamax.WalletUserOnboarding.payload.requests.SignupRequest;
 import com.obamax.WalletUserOnboarding.repositories.RoleRepository;
 import com.obamax.WalletUserOnboarding.repositories.UserRepository;
 import com.obamax.WalletUserOnboarding.repositories.WalletRepository;
 import com.obamax.WalletUserOnboarding.services.UserService;
-import com.obamax.WalletUserOnboarding.exceptions.BadRequestException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.regex.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -58,14 +60,15 @@ public class UserServiceImpl implements UserService {
 
         // Set role
         List<Role> roles = new ArrayList<>();
-        Role userRole = roleRepository.findRoleByType(RoleType.USER)
-                .orElseThrow(() -> new ResourceNotFoundException("Error: Role is not found."));
+        Role userRole = new Role();
+        userRole.setType(RoleType.USER);
         roles.add(userRole);
         user.setRoles(roles);
 
         // Create wallet
-        Wallet wallet = walletRepository.save(Wallet.builder().user(user).balance(0.0).build());
-        user.setWallet(wallet);
+        Wallet wallet = new Wallet();
+        wallet.setBalance(0.0);
+        user.setWallet(walletRepository.save(wallet));
 
         return userRepository.save(user);
     }

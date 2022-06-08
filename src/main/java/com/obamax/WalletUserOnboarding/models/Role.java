@@ -1,5 +1,6 @@
 package com.obamax.WalletUserOnboarding.models;
 
+import com.obamax.WalletUserOnboarding.models.enums.RoleType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -16,5 +17,4 @@ public class Role extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private RoleType type;
-
 }
