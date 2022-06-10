@@ -2,19 +2,25 @@ package com.obamax.WalletUserOnboarding.services.implementaion;
 
 import com.obamax.WalletUserOnboarding.exceptions.BadRequestException;
 import com.obamax.WalletUserOnboarding.exceptions.ResourceNotFoundException;
+import com.obamax.WalletUserOnboarding.models.Product;
 import com.obamax.WalletUserOnboarding.models.Transaction;
 import com.obamax.WalletUserOnboarding.models.Wallet;
 import com.obamax.WalletUserOnboarding.models.enums.TransactionMode;
 import com.obamax.WalletUserOnboarding.models.enums.TransactionStatus;
 import com.obamax.WalletUserOnboarding.models.enums.TransactionType;
+import com.obamax.WalletUserOnboarding.payload.requests.WalletPurchaseRequest;
 import com.obamax.WalletUserOnboarding.payload.requests.WalletWithdrawalRequest;
+import com.obamax.WalletUserOnboarding.payload.responses.WalletPurchaseResponse;
 import com.obamax.WalletUserOnboarding.payload.responses.WalletResponse;
 import com.obamax.WalletUserOnboarding.payload.responses.WalletWithdrawalResponse;
+import com.obamax.WalletUserOnboarding.repositories.ProductRepository;
 import com.obamax.WalletUserOnboarding.repositories.TransactionRepository;
 import com.obamax.WalletUserOnboarding.repositories.WalletRepository;
 import com.obamax.WalletUserOnboarding.services.WalletService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 public class WalletServiceImpl implements WalletService {
@@ -22,10 +28,12 @@ public class WalletServiceImpl implements WalletService {
     private static final String NOT_APPLICABLE = "NOT_APPLICABLE";
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
+    private final ProductRepository productRepository;
 
-    public WalletServiceImpl(WalletRepository walletRepository, TransactionRepository transactionRepository) {
+    public WalletServiceImpl(WalletRepository walletRepository, TransactionRepository transactionRepository, ProductRepository productRepository) {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
+        this.productRepository = productRepository;
     }
 
     @Override
@@ -88,6 +96,42 @@ public class WalletServiceImpl implements WalletService {
                 .bankName(walletWithdrawalRequest.getBankName())
                 .beneficiaryAccountNumber(walletWithdrawalRequest.getBeneficiaryAccountNumber())
                 .amount(amount)
+                .build();
+    }
+
+    @Override
+    public WalletPurchaseResponse makePurchase(WalletPurchaseRequest walletPurchaseRequest) {
+        Wallet wallet = getWalletById(walletPurchaseRequest.getWalletId());
+        Product product = productRepository.findById(walletPurchaseRequest.getProductId())
+                .orElseThrow(() -> {
+                    throw new ResourceNotFoundException("Product not found.", HttpStatus.NOT_FOUND);
+                });
+        double amount = walletPurchaseRequest.getQuantity().doubleValue() * product.getPrice();
+
+        if (amount <= 0) {
+            saveTransactionDetails(amount, wallet, TransactionMode.DEBIT, TransactionStatus.FAILED,
+                    TransactionType.PURCHASE, NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE);
+            throw new BadRequestException("Amount cannot be less than or equal to zero.", HttpStatus.BAD_REQUEST);
+        }
+
+        if (wallet.getBalance() < amount) {
+            saveTransactionDetails(amount, wallet, TransactionMode.DEBIT, TransactionStatus.INSUFFICIENT_FUNDS,
+                    TransactionType.PURCHASE, NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE);
+            throw new BadRequestException("Insufficient funds.", HttpStatus.BAD_REQUEST);
+        }
+
+        wallet.setBalance(wallet.getBalance() - amount);
+
+        Wallet savedWallet = walletRepository.save(wallet);
+
+        saveTransactionDetails(amount, wallet, TransactionMode.DEBIT, TransactionStatus.SUCCESSFUL,
+                TransactionType.PURCHASE, NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE);
+
+        return WalletPurchaseResponse.builder().walletId(savedWallet.getId())
+                .productId(product.getId())
+                .quantity(walletPurchaseRequest.getQuantity())
+                .totalAmount(amount)
+                .timeOfPurchase(LocalDateTime.now())
                 .build();
     }
 

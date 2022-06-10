@@ -29,7 +29,7 @@ public class Transaction extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private TransactionStatus transactionStatus;
 
-    private double amount;
+    private Double amount;
 
     private String bankName;
 
