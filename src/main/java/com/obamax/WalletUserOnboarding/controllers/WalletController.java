@@ -1,6 +1,8 @@
 package com.obamax.WalletUserOnboarding.controllers;
 
+import com.obamax.WalletUserOnboarding.payload.requests.WalletPurchaseRequest;
 import com.obamax.WalletUserOnboarding.payload.requests.WalletWithdrawalRequest;
+import com.obamax.WalletUserOnboarding.payload.responses.WalletPurchaseResponse;
 import com.obamax.WalletUserOnboarding.payload.responses.WalletResponse;
 import com.obamax.WalletUserOnboarding.payload.responses.WalletWithdrawalResponse;
 import com.obamax.WalletUserOnboarding.services.WalletService;
@@ -34,5 +36,11 @@ public class WalletController {
     public ResponseEntity<WalletWithdrawalResponse> walletWithdrawal(@RequestBody WalletWithdrawalRequest walletWithdrawalRequest) {
         WalletWithdrawalResponse walletWithdrawalResponse = walletService.walletWithdrawal(walletWithdrawalRequest);
         return new ResponseEntity<>(walletWithdrawalResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/buy")
+    public ResponseEntity<WalletPurchaseResponse> buyProduct(@RequestBody WalletPurchaseRequest walletPurchaseRequest) {
+        WalletPurchaseResponse walletPurchaseResponse = walletService.makePurchase(walletPurchaseRequest);
+        return new ResponseEntity<>(walletPurchaseResponse, HttpStatus.OK);
     }
 }
